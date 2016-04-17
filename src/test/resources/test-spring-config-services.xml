@@ -1,0 +1,73 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:context="http://www.springframework.org/schema/context"
+	xsi:schemaLocation="
+			http://www.springframework.org/schema/beans
+			http://www.springframework.org/schema/beans/spring-beans.xsd
+			http://www.springframework.org/schema/context
+			http://www.springframework.org/schema/context/spring-context.xsd">
+
+	<context:component-scan base-package="com.clinkast.qcm.services" />
+	<context:property-placeholder
+		location="classpath*:test-qcm.properties"
+		ignore-unresolvable="true" />
+
+	<bean id="mailSender" class="org.springframework.mail.javamail.JavaMailSenderImpl">
+		<property name="host" value="smtp.gmail.com" />
+		<property name="port" value="587" />
+		<property name="username" value="${mail.username}" />
+		<property name="password" value="${mail.password}" />
+
+		<!-- The name of the property, following JavaBean naming conventions -->
+		<property name="javaMailProperties">
+			<props>
+				<prop key="mail.transport.protocol">smtp</prop>
+				<prop key="mail.smtp.auth">true</prop>
+				<prop key="mail.smtp.starttls.enable">true</prop>
+				<prop key="mail.debug">true</prop>
+			</props>
+		</property>
+	</bean>
+
+
+	<bean id="resetPasswordMailMessage" class="org.springframework.mail.SimpleMailMessage">
+		<property name="from" value="${mail.from}" />
+		<property name="subject" value="${mail.subject}" />
+		<property name="text">
+			<value>
+<![CDATA[Bonjour %s,
+		
+Nous avons reçu une demande de nouveau de mot de passe pour votre compte sur Clinkast QCM.
+
+Cliquez sur le lien suivant pour réinitialiser votre mode de passe :
+%s
+
+Cet e-mail a été envoyé automatiquement, merci de ne pas y répondre.
+
+Copyright © 2008 - 2016 Clinkast, Tous droits réservés.
+]]>
+			</value>
+		</property>
+	</bean>
+
+
+	<bean id="subscriptionMailMessage" class="org.springframework.mail.SimpleMailMessage">
+		<property name="from" value="${mail.from}" />
+		<property name="subject" value="${mail.subject.subscription}" />
+		<property name="text">
+			<value>
+<![CDATA[Bonjour et bienvenue sur l'application QCM de CLinkast!
+Votre inscription sur le site a bien été enregistrée.
+
+Le nom d'utilisateur de votre nouveau compte DraceCode est : %s.
+
+Vous pouvez sans plus attendre commencer à découvrir les fonctionnalités de l'application à cette adresse : %s
+
+Cet e-mail a été envoyé automatiquement, merci de ne pas y répondre.
+
+Copyright © 2008 - 2016 Clinkast, Tous droits réservés.
+]]>
+			</value>
+		</property>
+	</bean>
+</beans>

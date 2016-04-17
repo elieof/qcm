@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<bean:beans xmlns:bean="http://www.springframework.org/schema/beans"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:c="http://www.springframework.org/schema/c"
+	xmlns="http://www.springframework.org/schema/security"
+	xsi:schemaLocation="http://www.springframework.org/schema/beans
+		http://www.springframework.org/schema/beans/spring-beans.xsd
+		http://www.springframework.org/schema/security
+		http://www.springframework.org/schema/security/spring-security-4.0.xsd">
+
+	<!-- Applies to root appContext beans only, for MVC Controllers is this 
+		declaration repeated in MVC config. Actually, we currently don't need this 
+		as we have on annotation outside of MVC. There is more here that can go wrong. 
+		If you use interface-based proxy (our demo uses CGLib), you may need to add 
+		proxy-target-class="true" as well. Book "Spring Security 3.1", Chapter 10, 
+		Fine-grained Access Control, from header "Method security on Spring MVC controllers" 
+		on discusses these topics. -->
+	<global-method-security pre-post-annotations="enabled" proxy-target-class="true"/>
+
+	<http realm="Protected API" use-expressions="true" create-session="stateless"
+		entry-point-ref="unauthorizedEntryPoint" authentication-manager-ref="restAuthenticationManager">
+
+		<!--we could not login with basic auth because of: Expected CSRF token not found  -->
+		<csrf disabled="true" />
+
+		<!-- This is not easily possible, because it causes: DEBUG o.s.s.w.a.ExceptionTranslationFilter 
+			- Authentication exception occurred; redirecting to authentication entry 
+			point org.springframework.security.authentication.AuthenticationCredentialsNotFoundException: 
+			An Authentication object was not found in the SecurityContext -->
+		<!--<anonymous enabled="false"/> -->
+		<custom-filter ref="restAuthenticationFilter" position="FORM_LOGIN_FILTER" />
+
+		<custom-filter ref="corsFilter" position="FIRST" />
+
+		<intercept-url pattern="/resources/public/**" access="permitAll" />
+		<intercept-url pattern="/resources/img/**" access="permitAll" />
+		<intercept-url pattern="/resources/bower_components/**"
+			access="permitAll" />
+		<intercept-url pattern="/users/" method="POST" access="permitAll" />
+		<intercept-url pattern="/login/" method="POST" access="permitAll" />
+		<intercept-url pattern="/**" access="isAuthenticated()" />
+	</http>
+
+	<bean:bean id="corsFilter" class="com.clinkast.qcm.security.CorsFilter" />
+
+	<bean:bean id="unauthorizedEntryPoint"
+		class="com.clinkast.qcm.security.UnauthorizedEntryPoint" />
+
+	<!-- <bean:bean id="userDetailService"
+		class="com.clinkast.qcm.security.AppUserDetailsService" /> -->
+
+	<authentication-manager id="restAuthenticationManager">
+		<authentication-provider user-service-ref="appUserDetailsService">
+			<password-encoder ref="encoder" />
+		</authentication-provider>
+	</authentication-manager>
+
+	<bean:bean id="tokenManager" class="com.clinkast.qcm.security.TokenManager" />
+
+	<bean:bean id="authenticationService"
+		class="com.clinkast.qcm.security.AuthenticationServiceImpl"
+		c:authenticationManager-ref="restAuthenticationManager"
+		c:tokenManager-ref="tokenManager" />
+
+	<bean:bean id="restAuthenticationFilter"
+		class="com.clinkast.qcm.security.TokenAuthenticationFilter"
+		c:authenticationService-ref="authenticationService" c:logoutLink="/logout" 
+		c:tokenLink=""/>
+
+
+</bean:beans>
